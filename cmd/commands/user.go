@@ -43,6 +43,7 @@ func runUserCommand(command func(dbConn *sqlx.DB, args conf.Args) error) error {
 			Password string `conf:"default:postgres,mask"`
 			Host     string `conf:"default:postgres"`
 			Name     string `conf:"default:postgres,env:POSTGRES_DB"`
+			Port     int `conf:"default:5432"`
 			SSLMode  string `conf:"default:prefer"`
 		}
 		Args conf.Args
@@ -61,6 +62,7 @@ func runUserCommand(command func(dbConn *sqlx.DB, args conf.Args) error) error {
 		User:         cfg.Postgres.User,
 		Password:     cfg.Postgres.Password,
 		Host:         cfg.Postgres.Host,
+		Port:         cfg.Postgres.Port,
 		Name:         cfg.Postgres.Name,
 		MaxIdleConns: 1,
 		MaxOpenConns: 1,

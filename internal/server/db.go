@@ -3,6 +3,7 @@ package server
 // Code from https://github.com/ardanlabs/service/blob/master/business/sys/database/database.go
 
 import (
+	"strconv"
 	"net/url"
 
 	"github.com/jmoiron/sqlx"
@@ -15,6 +16,7 @@ type DBConfig struct {
 	Password     string
 	Host         string
 	Name         string
+	Port         int
 	MaxIdleConns int
 	MaxOpenConns int
 	SSLMode      string
@@ -28,7 +30,7 @@ func OpenDB(cfg DBConfig) (*sqlx.DB, error) {
 	u := url.URL{
 		Scheme:   "postgres",
 		User:     url.UserPassword(cfg.User, cfg.Password),
-		Host:     cfg.Host,
+		Host:     cfg.Host + ":" + strconv.Itoa(cfg.Port),
 		Path:     cfg.Name,
 		RawQuery: q.Encode(),
 	}

@@ -21,6 +21,7 @@ func runMigrateCommand() error {
 			Password string `conf:"default:postgres,mask"`
 			Host     string `conf:"default:postgres"`
 			Name     string `conf:"default:postgres,env:POSTGRES_DB"`
+			Port     int    `conf:"default:5432"`
 			SSLMode  string `conf:"default:prefer"`
 		}
 		Args conf.Args
@@ -41,7 +42,7 @@ func runMigrateCommand() error {
 	u := url.URL{
 		Scheme:   "postgres",
 		User:     url.UserPassword(cfg.Postgres.User, cfg.Postgres.Password),
-		Host:     cfg.Postgres.Host,
+		Host:     cfg.Postgres.Host + ":" + strconv.Itoa(cfg.Postgres.Port),
 		Path:     cfg.Postgres.Name,
 		RawQuery: q.Encode(),
 	}
