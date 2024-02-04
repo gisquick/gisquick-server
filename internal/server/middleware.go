@@ -48,20 +48,44 @@ func SuperuserAccessMiddleware(a *auth.AuthService) echo.MiddlewareFunc {
 	}
 }
 
-func ProjectAdminAccessMiddleware(a *auth.AuthService) echo.MiddlewareFunc {
+func ProjectSuperuserAccessMiddleware(a *auth.AuthService, ps application.ProjectService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			username := c.Param("user")
-			projectName := c.Param("name")
+			name := c.Param("name")
+			user, err := a.GetUser(c)
+			if err != nil {
+				return fmt.Errorf("ProjectSuperuserAccessMiddleware: %w", err)
+			}
+			if username != user.Username && !user.IsSuperuser {
+				return echo.ErrUnauthorized
+			}
+			c.Set("project", filepath.Join(username, name))
+			return next(c)
+		}
+	}
+}
 
+func ProjectAdminAccessMiddleware(a *auth.AuthService, ps application.ProjectService) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			username := c.Param("user")
+			name := c.Param("name")
+			projectName := filepath.Join(username, name)
 			user, err := a.GetUser(c)
 			if err != nil {
 				return fmt.Errorf("ProjectAdminAccessMiddleware: %w", err)
 			}
 			if username != user.Username && !user.IsSuperuser {
-				return echo.ErrUnauthorized
+				settings, err := ps.GetSettings(projectName)
+				if err != nil {
+					return fmt.Errorf("[ProjectAdminAccessMiddleware] reading project settings: %w", err)
+				}
+				if !domain.StringArray(settings.SettingsAuth.AdminUsers).Has(user.Username) {
+					return echo.ErrUnauthorized
+				}
 			}
-			c.Set("project", filepath.Join(username, projectName))
+			c.Set("project", projectName)
 			return next(c)
 		}
 	}

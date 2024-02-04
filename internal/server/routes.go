@@ -14,7 +14,8 @@ func (s *Server) AddRoutes(e *echo.Echo) {
 
 	LoginRequired := LoginRequiredMiddlewareWithConfig(s.auth)
 	SuperuserRequired := SuperuserAccessMiddleware(s.auth)
-	ProjectAdminAccess := ProjectAdminAccessMiddleware(s.auth)
+	ProjectAdminAccess := ProjectAdminAccessMiddleware(s.auth, s.projects)
+	ProjectSuperuserAccess := ProjectSuperuserAccessMiddleware(s.auth, s.projects)
 	ProjectAccess := ProjectAccessMiddleware(s.auth, s.projects, "")
 	ProjectAccessOWS := ProjectAccessMiddleware(s.auth, s.projects, "basic realm=Restricted")
 
@@ -56,7 +57,7 @@ func (s *Server) AddRoutes(e *echo.Echo) {
 	// e.POST("/api/map/project/*", s.handleUpdateProject)
 
 	e.POST("/api/project/:user/:name", s.handleCreateProject(), LoginRequired)
-	e.DELETE("/api/project/:user/:name", s.handleDeleteProject, ProjectAdminAccess)
+	e.DELETE("/api/project/:user/:name", s.handleDeleteProject, ProjectSuperuserAccess)
 	e.GET("/api/projects", s.handleGetProjects())
 	e.GET("/api/projects/:user", s.handleGetUserProjects, SuperuserRequired)
 	e.POST("/api/project/upload/:user/:name", s.handleUpload(), ProjectAdminAccess)

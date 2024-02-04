@@ -57,6 +57,10 @@ type Authentication struct {
 	Roles []ProjectRole `json:"roles,omitempty"`
 }
 
+type SettingsAuthentication struct {
+	AdminUsers []string `json:"admin_users,omitempty"`
+}
+
 type SearchQueryParam struct {
 	Path  string `json:"path"`
 	Name  string `json:"name"`
@@ -70,7 +74,8 @@ type Geocoding struct {
 }
 
 type ProjectSettings struct {
-	Auth             Authentication           `json:"auth"` // or access?
+	Auth             Authentication           `json:"auth"`
+	SettingsAuth     SettingsAuthentication   `json:"settings_auth"`
 	BaseLayers       []string                 `json:"base_layers"`
 	Layers           map[string]LayerSettings `json:"layers"`
 	Title            string                   `json:"title"`
