@@ -85,11 +85,10 @@ func (p *UserRolesPermissions) LayerFlags(layerId string) Flags {
 func (p *UserRolesPermissions) AttributesFlags(layerId string) map[string]Flags {
 	flagsMap, exists := p.attributes[layerId]
 	if !exists {
-		flagsMap = p.roles[0].Permissions.Attributes[layerId]
-		// flagsMap = make(map[string]Flags, 0) // is it needed to check if Permissions.Attributes[layerId] exists?
-		for _, f := range p.roles[1:] {
-			for attrName, flags := range flagsMap {
-				flagsMap[attrName] = flags.Union(f.Permissions.Attributes[layerId][attrName])
+		flagsMap = make(map[string]Flags, 0)
+		for _, f := range p.roles {
+			for attrName, flags := range f.Permissions.Attributes[layerId] {
+				flagsMap[attrName] = flags.Union(flagsMap[attrName])
 			}
 		}
 		p.attributes[layerId] = flagsMap
