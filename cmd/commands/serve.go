@@ -244,10 +244,12 @@ func Serve() error {
 	sws := ws.NewSettingsWS(log)
 	s := server.NewServer(log, conf, authServ, accountsService, projectsServ, sws, limiter, notifications)
 
-	extensionsList := strings.Split(cfg.Gisquick.Extensions, ",")
-	for _, e := range extensionsList {
-		if err := s.AddExtension(e); err != nil {
-			log.Errorw("adding server extension", "name", e, zap.Error(err))
+	if cfg.Gisquick.Extensions != "" {
+		extensionsList := strings.Split(cfg.Gisquick.Extensions, ",")
+		for _, e := range extensionsList {
+			if err := s.AddExtension(e); err != nil {
+				log.Errorw("adding server extension", "name", e, zap.Error(err))
+			}
 		}
 	}
 
