@@ -31,6 +31,11 @@ type LayerSettings struct {
 	CustomProperties json.RawMessage `json:"custom,omitempty"`
 }
 
+type GroupSettings struct {
+	Collapsed    bool `json:"collapsed"`
+	VirtualLayer bool `json:"virtual_layer"`
+}
+
 type Topic struct {
 	ID       string   `json:"id"`
 	Title    string   `json:"title"`
@@ -78,6 +83,7 @@ type ProjectSettings struct {
 	SettingsAuth     SettingsAuthentication   `json:"settings_auth"`
 	BaseLayers       []string                 `json:"base_layers"`
 	Layers           map[string]LayerSettings `json:"layers"`
+	Groups           map[string]GroupSettings `json:"groups"`
 	Title            string                   `json:"title"`
 	MapCache         bool                     `json:"use_mapcache"`
 	Topics           []Topic                  `json:"topics"`

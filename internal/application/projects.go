@@ -441,8 +441,8 @@ func indexOf(items []string, value string) int {
 	return -1
 }
 
-func TransformLayersTree(tree []domain.TreeNode, accept func(id string) bool, transform func(id string) interface{}) ([]interface{}, error) {
-	list := make([]interface{}, 0)
+func TransformLayersTree(tree []domain.TreeNode, accept func(id string) bool, transform func(id string) any, groupsSettings map[string]domain.GroupSettings) ([]any, error) {
+	list := make([]any, 0)
 	// without reordering
 	// for _, n := range tree {
 	// 	if n.IsGroup() {
@@ -472,7 +472,7 @@ func TransformLayersTree(tree []domain.TreeNode, accept func(id string) bool, tr
 	}
 	for _, n := range tree {
 		if n.IsGroup() {
-			layers, err := TransformLayersTree(n.Children(), accept, transform)
+			layers, err := TransformLayersTree(n.Children(), accept, transform, groupsSettings)
 			if err != nil {
 				return nil, err
 			}
@@ -482,6 +482,13 @@ func TransformLayersTree(tree []domain.TreeNode, accept func(id string) bool, tr
 					"name":               n.GroupName(),
 					"layers":             layers,
 					"mutually_exclusive": g.MutuallyExclusive,
+				}
+				if g.WmsName != "" {
+					// ng["wms_name"] = g.WmsName
+					if s, ok := groupsSettings[g.WmsName]; ok {
+						ng["collapsed"] = s.Collapsed
+						ng["virtual_layer"] = s.VirtualLayer
+					}
 				}
 				list = append(list, ng)
 			}
@@ -608,7 +615,11 @@ func (s *projectService) GetMapConfig(projectName string, user domain.User) (map
 			}
 			return ldata
 		},
+		settings.Groups,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	layers, err := TransformLayersTree(
 		overlays,
@@ -735,8 +746,11 @@ func (s *projectService) GetMapConfig(projectName string, user domain.User) (map
 			}
 			return ldata
 		},
+		settings.Groups,
 	)
-
+	if err != nil {
+		return nil, err
+	}
 	data := make(map[string]interface{})
 	// data["authentication"] = settings.Authentication
 	data["use_mapcache"] = settings.MapCache

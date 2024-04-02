@@ -105,6 +105,7 @@ func (l LayerTreeNode) Children() []TreeNode {
 
 type GroupTreeNode struct {
 	Name              string     `json:"name"`
+	WmsName           string     `json:"wms_name,omitempty"`
 	Layers            []TreeNode `json:"layers"`
 	MutuallyExclusive bool       `json:"mutually_exclusive,omitempty"`
 }
@@ -167,8 +168,9 @@ func CreateTree2(items []interface{}) ([]TreeNode, error) {
 			if err != nil {
 				return nil, ErrInvalidTree
 			}
-			mutuallyExclusive, ok := o["mutually_exclusive"].(bool)
-			nodes[i] = GroupTreeNode{Name: name, Layers: subtree, MutuallyExclusive: mutuallyExclusive}
+			mutuallyExclusive, _ := o["mutually_exclusive"].(bool)
+			wmsName, _ := o["wms_name"].(string)
+			nodes[i] = GroupTreeNode{Name: name, WmsName: wmsName, Layers: subtree, MutuallyExclusive: mutuallyExclusive}
 		} else {
 			id, ok := o["id"].(string)
 			if !ok {
