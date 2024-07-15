@@ -52,13 +52,13 @@ type LayerMeta struct {
 }
 
 type LayerAttribute struct {
-	Alias      string                 `json:"alias,omitempty"`
-	Name       string                 `json:"name"`
-	Type       string                 `json:"type"`
-	Constrains Flags                  `json:"constrains,omitempty"`
-	Widget     string                 `json:"widget,omitempty"`
-	Config     map[string]interface{} `json:"config,omitempty"`
-	Format     string                 `json:"format,omitempty"`
+	Alias       string                 `json:"alias,omitempty"`
+	Name        string                 `json:"name"`
+	Type        string                 `json:"type"`
+	Constraints Flags                  `json:"constraints,omitempty"`
+	Widget      string                 `json:"widget,omitempty"`
+	Config      map[string]interface{} `json:"config,omitempty"`
+	Format      string                 `json:"format,omitempty"`
 }
 
 type QgisMeta struct {

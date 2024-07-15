@@ -407,12 +407,12 @@ func filterList(list []string, test func(item string) bool) []string {
 
 func MergeAttributeConfig(meta domain.LayerAttribute, settings domain.AttributeSettings) domain.LayerAttribute {
 	attr := domain.LayerAttribute{
-		Alias:      meta.Alias,
-		Name:       meta.Name,
-		Type:       meta.Type,
-		Widget:     meta.Widget,
-		Config:     meta.Config,
-		Constrains: meta.Constrains,
+		Alias:       meta.Alias,
+		Name:        meta.Name,
+		Type:        meta.Type,
+		Widget:      meta.Widget,
+		Config:      meta.Config,
+		Constraints: meta.Constraints,
 	}
 	if settings.Widget != "" {
 		attr.Widget = settings.Widget
@@ -752,8 +752,8 @@ func (s *projectService) GetMapConfig(projectName string, user domain.User) (map
 						for _, a := range lmeta.Attributes {
 							if isAttributeVisible(a.Name) {
 								attr := MergeAttributeConfig(a, lset.Attributes[a.Name])
-								if !attrsPerms[a.Name].Has("edit") && !attr.Constrains.Has("readonly") {
-									attr.Constrains = attr.Constrains.Union(domain.Flags{"readonly"})
+								if !attrsPerms[a.Name].Has("edit") && !attr.Constraints.Has("readonly") {
+									attr.Constraints = attr.Constraints.Union(domain.Flags{"readonly"})
 								}
 								ldata.Attributes = append(ldata.Attributes, attr)
 							}
