@@ -25,10 +25,12 @@ type LayerSettings struct {
 	ExportFields []string `json:"export_fields,omitempty"`
 	// FieldsOrder          json.RawMessage              `json:"fields_order,omitempty"`
 	// ExcludedFields   json.RawMessage `json:"excluded_fields,omitempty"`
-	FieldsOrder      *FieldsConfig   `json:"fields_order,omitempty"`
-	ExcludedFields   *FieldsConfig   `json:"excluded_fields,omitempty"`
-	LegendDisabled   bool            `json:"legend_disabled,omitempty"`
-	CustomProperties json.RawMessage `json:"custom,omitempty"`
+	FieldsOrder      *FieldsConfig             `json:"fields_order,omitempty"`
+	ExcludedFields   *FieldsConfig             `json:"excluded_fields,omitempty"`
+	LegendDisabled   bool                      `json:"legend_disabled,omitempty"`
+	QgisRelations    map[string]map[string]any `json:"qgis_relations,omitempty"`
+	Relations        []map[string]any          `json:"relations,omitempty"`
+	CustomProperties json.RawMessage           `json:"custom,omitempty"`
 }
 
 type GroupSettings struct {
