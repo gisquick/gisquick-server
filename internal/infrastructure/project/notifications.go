@@ -114,7 +114,7 @@ func (s *RedisNotificationStore) GetMapProjectNotifications(projectName string, 
 	return notifications, nil
 }
 
-func (s *RedisNotificationStore) GetSettingsNotifications(projectName string, user domain.User) ([]Notification, error) {
+func (s *RedisNotificationStore) GetSettingsNotifications(user domain.User) ([]Notification, error) {
 	allNotifications, err := s.GetNotifications()
 	if err != nil {
 		return nil, err

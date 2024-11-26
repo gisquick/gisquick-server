@@ -94,6 +94,47 @@ func (r *JSONFileReader[V]) Get(filename string) (V, error) {
 	return rec.Val, nil
 }
 
+func (r *JSONFileReader[V]) Extend(filename string, data V) (V, error) {
+	fStat, err := os.Stat(filename)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			r.cache.Delete(filename)
+		}
+		var v V
+		return v, err
+	}
+	updated := fStat.ModTime()
+	timestamp := updated.Unix()
+
+	item := r.cache.Get(filename)
+	if item == nil {
+		res, err, _ := r.loaderLock.Do(filename, func() (interface{}, error) {
+			content, err := os.ReadFile(filename)
+			if err != nil {
+				return nil, err
+			}
+			err = json.Unmarshal(content, &data)
+			if err != nil {
+				return nil, err
+			}
+			rec := record[V]{Val: data, Timestamp: timestamp}
+			r.cache.Set(filename, rec, ttlcache.DefaultTTL)
+			return data, nil
+		})
+		var v V
+		if err != nil {
+			return v, err
+		}
+		v = res.(V)
+		return v, nil
+	}
+	rec := item.Value()
+	if rec.Timestamp != timestamp {
+		return r.load(filename, timestamp)
+	}
+	return rec.Val, nil
+}
+
 func (r *JSONFileReader[V]) Close() {
 	r.cache.Stop()
 	r.cache.DeleteAll()

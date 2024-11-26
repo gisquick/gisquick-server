@@ -43,12 +43,13 @@ type Server struct {
 	echo   *echo.Echo
 	log    *zap.SugaredLogger
 	// Logger          echo.Logger
-	auth            *auth.AuthService
-	accountsService *application.AccountsService
-	projects        application.ProjectService
-	notifications   *project.RedisNotificationStore
-	sws             *ws.SettingsWS
-	limiter         application.AccountsLimiter
+	auth              *auth.AuthService
+	accountsService   *application.AccountsService
+	projects          application.ProjectService
+	notifications     *project.RedisNotificationStore
+	sws               *ws.SettingsWS
+	limiter           application.AccountsLimiter
+	shutdownCallbacks []func()
 }
 
 type JSONSerializer struct{}
@@ -139,8 +140,15 @@ func (s *Server) ListenAndServe(addr string) error {
 	return s.echo.Start(addr)
 }
 
+func (s *Server) OnShutdown(fn func()) {
+	s.shutdownCallbacks = append(s.shutdownCallbacks, fn)
+}
+
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.projects.Close()
+	for _, fn := range s.shutdownCallbacks {
+		fn()
+	}
 	return s.echo.Shutdown(ctx)
 }
 

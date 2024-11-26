@@ -7,15 +7,25 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gisquick/gisquick-server/internal/domain"
+	"github.com/gisquick/gisquick-server/internal/infrastructure/cache"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
+type AppConfig struct {
+	Language       string `json:"lang,omitempty"`
+	LandingProject string `json:"landing_project,omitempty"`
+	Languages      []struct {
+		Code string `json:"code"`
+		Name string `json:"name"`
+	} `json:"languages,omitempty"`
+}
+
 type AppData struct {
-	Language         string `json:"lang"`
-	LandingProject   string `json:"landing_project,omitempty"`
+	AppConfig
 	PasswordResetUrl string `json:"reset_password_url,omitempty"`
 }
 
@@ -53,25 +63,40 @@ func (s *Server) getUserProfile(user domain.User) (map[string]interface{}, error
 	return userProfile, nil
 }
 
-func (s *Server) handleAppInit(c echo.Context) error {
-	user, err := s.auth.GetUser(c)
-	if err != nil {
-		return fmt.Errorf("handleAppInit get user: %w", err)
+func (s *Server) handleAppInit() func(echo.Context) error {
+	configReader := cache.NewJSONFileReader[AppConfig](time.Hour)
+	s.OnShutdown(configReader.Close)
+
+	return func(c echo.Context) error {
+		user, err := s.auth.GetUser(c)
+		if err != nil {
+			return fmt.Errorf("handleAppInit get user: %w", err)
+		}
+		// userdtoUser()
+		config := AppConfig{
+			Language:       s.Config.Language,
+			LandingProject: s.Config.LandingProject,
+		}
+		userProfile, err := s.getUserProfile(user)
+		if err != nil {
+			s.log.Warnw("handleAppInit", "user", user.Username, zap.Error(err))
+		}
+		config, err = configReader.Extend("/etc/gisquick/app.json", config)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			s.log.Errorw("reading app configuration file", zap.Error(err))
+		}
+		app := AppData{
+			AppConfig: config,
+		}
+		if s.accountsService.SupportEmails() {
+			app.PasswordResetUrl = "/api/accounts/password_reset"
+		}
+		data := AppPayload{
+			App:  app,
+			User: UserData{User: user, Profile: userProfile},
+		}
+		return c.JSON(http.StatusOK, data)
 	}
-	// userdtoUser()
-	app := AppData{
-		Language:       s.Config.Language,
-		LandingProject: s.Config.LandingProject,
-	}
-	if s.accountsService.SupportEmails() {
-		app.PasswordResetUrl = "/api/accounts/password_reset"
-	}
-	userProfile, err := s.getUserProfile(user)
-	if err != nil {
-		s.log.Warnw("handleAppInit", "user", user.Username, zap.Error(err))
-	}
-	data := AppPayload{App: app, User: UserData{User: user, Profile: userProfile}}
-	return c.JSON(http.StatusOK, data)
 }
 
 type SessionData struct {

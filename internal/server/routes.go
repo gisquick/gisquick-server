@@ -52,7 +52,7 @@ func (s *Server) AddRoutes(e *echo.Echo) {
 	e.GET("/api/auth/is_authenticated", s.handleGetSessionUser, LoginRequired)
 	e.GET("/api/auth/is_superuser", s.handleGetSessionUser, SuperuserRequired)
 
-	e.GET("/api/app", s.handleAppInit)
+	e.GET("/api/app", s.handleAppInit())
 
 	// e.POST("/api/map/project/*", s.handleUpdateProject)
 
