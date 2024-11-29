@@ -334,6 +334,9 @@ func (s *DiskStorage) GetProjectInfo(name string) (domain.ProjectInfo, error) {
 	projPath := filepath.Join(s.ProjectsRoot, name, ".gisquick", "project.json")
 	pInfo, err := s.projectInfoReader.Get(projPath)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return domain.ProjectInfo{}, domain.ErrProjectNotExists
+		}
 		return domain.ProjectInfo{}, err
 	}
 	pInfo.Name = name
