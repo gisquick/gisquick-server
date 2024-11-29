@@ -29,6 +29,7 @@ func (s *Server) AddRoutes(e *echo.Echo) {
 	e.GET("/api/admin/users", s.handleGetAllUsers, SuperuserRequired)
 	e.GET("/api/admin/users/:user", s.handleGetUser, SuperuserRequired)
 	e.PUT("/api/admin/users/:user", s.handleUpdateUser(), SuperuserRequired)
+	e.PUT("/api/admin/users/profile/:user", s.handleUpdateUserProfile, SuperuserRequired)
 	e.DELETE("/api/admin/users/:user", s.handleDeleteUser, SuperuserRequired)
 	e.POST("/api/admin/user", s.handleCreateUser(), SuperuserRequired)
 	e.POST("/api/admin/email_preview", s.handleGetEmailPreview(), SuperuserRequired)

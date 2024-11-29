@@ -99,6 +99,13 @@ func (r *AccountsRepository) Update(account domain.Account) error {
 	return err
 }
 
+func (r *AccountsRepository) UpdateProfile(account domain.Account) error {
+	user := toUser(account)
+	const q = `UPDATE users SET "profile" = :profile WHERE username = :username`
+	_, err := r.db.NamedExec(q, user)
+	return err
+}
+
 func (r *AccountsRepository) EmailExists(email string) (bool, error) {
 	var exists bool
 	err := r.db.QueryRow("SELECT exists (SELECT 1 FROM users WHERE email ILIKE $1)", email).Scan(&exists)
@@ -168,6 +175,7 @@ func toAccount(user User) domain.Account {
 		Created:   user.Created,
 		Confirmed: user.Confirmed,
 		LastLogin: user.LastLogin,
+		Profile:   user.Profile,
 	}
 }
 
@@ -183,5 +191,6 @@ func toUser(a domain.Account) User {
 		Created:     a.Created,
 		Confirmed:   a.Confirmed,
 		LastLogin:   a.LastLogin,
+		Profile:     a.Profile,
 	}
 }

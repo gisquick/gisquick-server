@@ -31,12 +31,14 @@ func (s *Server) handleLogin() func(echo.Context) error {
 			return err
 		}
 		user := auth.AccountToUser(account)
-		profile, err := s.getUserProfile(user)
-		if err != nil {
-			s.log.Warnw("handleLogin", "user", user.Username, zap.Error(err))
+		if user.Profile == nil {
+			profile, err := s.getUserProfile(user)
+			if err != nil {
+				s.log.Warnw("handleLogin", "user", user.Username, zap.Error(err))
+			}
+			user.Profile = profile
 		}
-		userData := UserData{User: user, Profile: profile}
-		return c.JSON(http.StatusOK, userData)
+		return c.JSON(http.StatusOK, user)
 	}
 }
 

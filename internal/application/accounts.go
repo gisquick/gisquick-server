@@ -55,26 +55,26 @@ func accountClaims(account domain.Account) string {
 	return fmt.Sprintf("%s:%s:%s:%s", account.Username, account.Email, string(account.Password), account.LastLogin)
 }
 
-func (s *AccountsService) NewAccount(username, email, firstName, lastName, password string) error {
+func (s *AccountsService) NewAccount(username, email, firstName, lastName, password string) (domain.Account, error) {
 	account, err := domain.NewAccount(username, email, firstName, lastName, password)
 	if err != nil {
-		return err
+		return account, err
 	}
 	if err := s.Repository.Create(account); err != nil {
-		return err
+		return account, err
 	}
 	if account.Email != "" && !account.Active {
 		uid := base64.URLEncoding.EncodeToString([]byte(account.Username))
 		token, err := s.tokenGen.GenerateToken(accountClaims(account))
 		if err != nil {
-			return err
+			return account, err
 		}
 		if err := s.Email.SendActivationEmail(account, uid, token, nil); err != nil {
 			// TODO: should we delete account, or implement re-sending?
-			return fmt.Errorf("sending registration email [%s]: %w", email, err)
+			return account, fmt.Errorf("sending registration email [%s]: %w", email, err)
 		}
 	}
-	return nil
+	return account, nil
 }
 
 func (s *AccountsService) SendActivationEmail(account domain.Account, data map[string]interface{}) error {

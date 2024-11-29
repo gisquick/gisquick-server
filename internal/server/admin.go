@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	htmltemplate "html/template"
@@ -17,15 +18,16 @@ import (
 )
 
 type Account struct {
-	Username  string     `json:"username"`
-	Email     string     `json:"email"`
-	FirstName string     `json:"first_name"`
-	LastName  string     `json:"last_name"`
-	Superuser bool       `json:"superuser"`
-	Active    bool       `json:"active"`
-	Created   *time.Time `json:"created_at"`
-	Confirmed *time.Time `json:"confirmed_at"`
-	LastLogin *time.Time `json:"last_login_at"`
+	Username  string         `json:"username"`
+	Email     string         `json:"email"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Superuser bool           `json:"superuser"`
+	Active    bool           `json:"active"`
+	Created   *time.Time     `json:"created_at"`
+	Confirmed *time.Time     `json:"confirmed_at"`
+	LastLogin *time.Time     `json:"last_login_at"`
+	Profile   map[string]any `json:"profile,omitempty"`
 }
 
 func toAccountInfo(a domain.Account) Account {
@@ -39,6 +41,7 @@ func toAccountInfo(a domain.Account) Account {
 		Created:   a.Created,
 		Confirmed: a.Confirmed,
 		LastLogin: a.LastLogin,
+		Profile:   a.Profile,
 	}
 }
 
@@ -69,11 +72,12 @@ func (s *Server) handleGetUser(c echo.Context) error {
 
 func (s *Server) handleUpdateUser() func(echo.Context) error {
 	type UserFields struct {
-		Email     string `json:"email"`
-		FirstName string `json:"first_name"`
-		LastName  string `json:"last_name"`
-		Superuser bool   `json:"superuser"`
-		Active    bool   `json:"active"`
+		Email     string         `json:"email"`
+		FirstName string         `json:"first_name"`
+		LastName  string         `json:"last_name"`
+		Superuser bool           `json:"superuser"`
+		Active    bool           `json:"active"`
+		Profile   map[string]any `json:"profile"`
 	}
 	return func(c echo.Context) error {
 		username := c.Param("user")
@@ -97,17 +101,36 @@ func (s *Server) handleUpdateUser() func(echo.Context) error {
 	}
 }
 
+func (s *Server) handleUpdateUserProfile(c echo.Context) error {
+	username := c.Param("user")
+	profile := make(map[string]any)
+	err := json.NewDecoder(c.Request().Body).Decode(&profile)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user profile format")
+	}
+	account, err := s.accountsService.Repository.GetByUsername(username)
+	if err != nil {
+		return err
+	}
+	account.Profile = profile
+	if err := s.accountsService.Repository.UpdateProfile(account); err != nil {
+		return fmt.Errorf("updating account [%s]: %w", username, err)
+	}
+	return c.JSON(http.StatusOK, toAccountInfo(account))
+}
+
 func (s *Server) handleCreateUser() func(echo.Context) error {
 	type UserFields struct {
-		Username  string                 `json:"username"`
-		Email     string                 `json:"email"`
-		Password  string                 `json:"password"`
-		FirstName string                 `json:"first_name"`
-		LastName  string                 `json:"last_name"`
-		Superuser bool                   `json:"superuser"`
-		Active    bool                   `json:"active"`
-		Extra     map[string]interface{} `json:"extra"`
-		SendEmail bool                   `json:"send_email"`
+		Username  string         `json:"username"`
+		Email     string         `json:"email"`
+		Password  string         `json:"password"`
+		FirstName string         `json:"first_name"`
+		LastName  string         `json:"last_name"`
+		Superuser bool           `json:"superuser"`
+		Active    bool           `json:"active"`
+		Extra     map[string]any `json:"extra"`
+		Profile   map[string]any `json:"profile"`
+		SendEmail bool           `json:"send_email"`
 	}
 	return func(c echo.Context) error {
 		form := new(UserFields)
@@ -131,12 +154,18 @@ func (s *Server) handleCreateUser() func(echo.Context) error {
 		account.Superuser = form.Superuser
 		if err := s.accountsService.Repository.Create(account); err != nil {
 			s.log.Errorw("creating account", "username", form.Username, zap.Error(err))
-			return fmt.Errorf("Failed to create user account")
+			return fmt.Errorf("failed to create user account")
+		}
+		if len(form.Profile) > 0 {
+			account.Profile = form.Profile
+			if err := s.accountsService.Repository.UpdateProfile(account); err != nil {
+				s.log.Errorw("saving user profile", zap.Error(err))
+			}
 		}
 		if account.Email != "" && !account.Active && form.SendEmail {
 			if err := s.accountsService.SendActivationEmail(account, form.Extra); err != nil {
 				s.log.Errorw("sending activation email", "username", form.Username, "email", form.Email, zap.Error(err))
-				return fmt.Errorf("Failed to send activation email")
+				return fmt.Errorf("failed to send activation email")
 			}
 		}
 

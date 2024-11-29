@@ -14,12 +14,13 @@ import (
 
 func (s *Server) handleSignUp() func(echo.Context) error {
 	type SignUpForm struct {
-		Username        string `json:"username" form:"username" validate:"required"`
-		Password        string `json:"password1" form:"password1" validate:"required"`
-		PasswordConfirm string `json:"password2" form:"password2" validate:"required"`
-		Email           string `json:"email" form:"email" validate:"required,email"`
-		FirstName       string `json:"first_name" form:"first_name"`
-		LastName        string `json:"last_name" form:"last_name"`
+		Username        string         `json:"username" form:"username" validate:"required"`
+		Password        string         `json:"password1" form:"password1" validate:"required"`
+		PasswordConfirm string         `json:"password2" form:"password2" validate:"required"`
+		Email           string         `json:"email" form:"email" validate:"required,email"`
+		FirstName       string         `json:"first_name" form:"first_name"`
+		LastName        string         `json:"last_name" form:"last_name"`
+		Profile         map[string]any `json:"profile"`
 	}
 	var validate = validator.New()
 
@@ -34,7 +35,7 @@ func (s *Server) handleSignUp() func(echo.Context) error {
 		if form.Password != form.PasswordConfirm {
 			return echo.NewHTTPError(http.StatusBadRequest, "Password doesn't match")
 		}
-		err := s.accountsService.NewAccount(form.Username, form.Email, form.FirstName, form.LastName, form.Password)
+		_, err := s.accountsService.NewAccount(form.Username, form.Email, form.FirstName, form.LastName, form.Password)
 		if err != nil {
 			if errors.Is(err, domain.ErrAccountExists) {
 				return echo.NewHTTPError(http.StatusBadRequest, "Account already exists")
@@ -64,7 +65,7 @@ func (s *Server) handleInvitation() func(echo.Context) error {
 		if err := validate.Struct(form); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		err := s.accountsService.NewAccount(form.Username, form.Email, form.FirstName, form.LastName, "")
+		_, err := s.accountsService.NewAccount(form.Username, form.Email, form.FirstName, form.LastName, "")
 		if err != nil {
 			if errors.Is(err, domain.ErrAccountExists) {
 				return echo.NewHTTPError(http.StatusBadRequest, "Account already exists")

@@ -271,5 +271,6 @@ func AccountToUser(account domain.Account) domain.User {
 		IsSuperuser:     account.Superuser,
 		IsGuest:         false,
 		IsAuthenticated: true,
+		Profile:         account.Profile,
 	}
 }

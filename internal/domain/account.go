@@ -65,6 +65,7 @@ type Account struct {
 	Created   *time.Time
 	Confirmed *time.Time
 	LastLogin *time.Time
+	Profile   map[string]any
 }
 
 func (a *Account) IsActive() bool {
@@ -143,6 +144,7 @@ func NewAccount(username, email, firstName, lastName, password string) (Account,
 type AccountsRepository interface {
 	Create(account Account) error
 	Update(account Account) error
+	UpdateProfile(account Account) error
 	Delete(username string) error
 	GetByUsername(username string) (Account, error)
 	GetByEmail(email string) (Account, error)

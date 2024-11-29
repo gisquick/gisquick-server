@@ -30,11 +30,12 @@ type AppData struct {
 }
 
 type UserInfo struct {
-	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	FullName  string `json:"full_name"`
-	Active    bool   `json:"active"`
+	Username  string         `json:"username"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	FullName  string         `json:"full_name"`
+	Active    bool           `json:"active"`
+	Profile   map[string]any `json:"profile,omitempty"`
 }
 
 type UserData struct {
@@ -124,6 +125,7 @@ func (s *Server) handleGetUsers(c echo.Context) error {
 			LastName:  u.LastName,
 			FullName:  u.FullName(),
 			Active:    u.Active,
+			Profile:   u.Profile,
 		})
 	}
 	return c.JSON(http.StatusOK, res)
