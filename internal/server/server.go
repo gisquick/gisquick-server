@@ -38,6 +38,15 @@ type Config struct {
 
 var extensions = make(map[string]func(s *Server) error, 0)
 
+type Middlewares struct {
+	LoginRequired          echo.MiddlewareFunc
+	SuperuserRequired      echo.MiddlewareFunc
+	ProjectAdminAccess     echo.MiddlewareFunc
+	ProjectSuperuserAccess echo.MiddlewareFunc
+	ProjectAccess          echo.MiddlewareFunc
+	ProjectAccessOWS       echo.MiddlewareFunc
+}
+
 type Server struct {
 	Config Config
 	echo   *echo.Echo
@@ -47,6 +56,7 @@ type Server struct {
 	accountsService   *application.AccountsService
 	projects          application.ProjectService
 	notifications     *project.RedisNotificationStore
+	middlewares       Middlewares
 	sws               *ws.SettingsWS
 	limiter           application.AccountsLimiter
 	shutdownCallbacks []func()
@@ -99,6 +109,14 @@ func NewServer(log *zap.SugaredLogger, cfg Config,
 			log.Error(err)
 		}
 	}
+	middlewares := Middlewares{
+		LoginRequired:          LoginRequiredMiddlewareWithConfig(as),
+		SuperuserRequired:      SuperuserAccessMiddleware(as),
+		ProjectAdminAccess:     ProjectAdminAccessMiddleware(as, projects),
+		ProjectSuperuserAccess: ProjectSuperuserAccessMiddleware(as, projects),
+		ProjectAccess:          ProjectAccessMiddleware(as, projects, ""),
+		ProjectAccessOWS:       ProjectAccessMiddleware(as, projects, "basic realm=Restricted"),
+	}
 
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(
@@ -126,6 +144,7 @@ func NewServer(log *zap.SugaredLogger, cfg Config,
 		auth:            as,
 		accountsService: signUpService,
 		projects:        projects,
+		middlewares:     middlewares,
 		sws:             sws,
 		limiter:         limiter,
 		notifications:   notifications,
@@ -133,6 +152,7 @@ func NewServer(log *zap.SugaredLogger, cfg Config,
 
 	// e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	s.AddRoutes(e)
+	AddAliasAPI(s)
 	return s
 }
 
