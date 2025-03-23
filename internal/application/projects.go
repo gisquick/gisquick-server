@@ -24,6 +24,8 @@ type ProjectService interface {
 	GetProjectInfo(projectName string) (domain.ProjectInfo, error)
 	GetUserProjects(username string) ([]domain.ProjectInfo, error)
 	AccessibleProjects(username string, skipErrors bool) ([]domain.ProjectInfo, error)
+	ProjectsNames(skipErrors bool) ([]string, error)
+
 	// SaveFile(projectName, filename string, r io.Reader) (string, error)
 	SaveFile(projectName, dir, pattern string, r io.Reader, size int64) (domain.ProjectFile, error)
 	DeleteFile(projectName, path string) error
@@ -847,6 +849,10 @@ func (s *projectService) GetMapConfig(projectName string, user domain.User) (map
 		data["search"] = search
 	}
 	return data, nil
+}
+
+func (s *projectService) ProjectsNames(skipErrors bool) ([]string, error) {
+	return s.repo.AllProjects(skipErrors)
 }
 
 func (s *projectService) AccessibleProjects(username string, skipErrors bool) ([]domain.ProjectInfo, error) {
