@@ -49,7 +49,7 @@ func (a *AliasManager) projectExists(name string) bool {
 
 func (a *AliasManager) handleGetAliases(c echo.Context) error {
 	filename := configFilename(c)
-	names, err := a.server.projects.ProjectsNames(true)
+	names, err := a.server.projects.ProjectsNames(false)
 	if err != nil {
 		return err
 	}
@@ -98,9 +98,7 @@ func (a *AliasManager) handleSetProjectAlias() func(c echo.Context) error {
 		}
 		// remove old alias and obsolete records
 		for alias, name := range aliases {
-			if name == form.ProjectName {
-				delete(aliases, alias)
-			} else if !a.projectExists(name) {
+			if name == form.ProjectName || !a.projectExists(name) {
 				delete(aliases, alias)
 			}
 		}

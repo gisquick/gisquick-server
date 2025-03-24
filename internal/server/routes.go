@@ -12,12 +12,12 @@ import (
 
 func (s *Server) AddRoutes(e *echo.Echo) {
 
-	LoginRequired := LoginRequiredMiddlewareWithConfig(s.auth)
-	SuperuserRequired := SuperuserAccessMiddleware(s.auth)
-	ProjectAdminAccess := ProjectAdminAccessMiddleware(s.auth, s.projects)
-	ProjectSuperuserAccess := ProjectSuperuserAccessMiddleware(s.auth, s.projects)
-	ProjectAccess := ProjectAccessMiddleware(s.auth, s.projects, "")
-	ProjectAccessOWS := ProjectAccessMiddleware(s.auth, s.projects, "basic realm=Restricted")
+	LoginRequired := s.middlewares.LoginRequired
+	SuperuserRequired := s.middlewares.SuperuserRequired
+	ProjectAdminAccess := s.middlewares.ProjectAdminAccess
+	ProjectSuperuserAccess := s.middlewares.ProjectSuperuserAccess
+	ProjectAccess := s.middlewares.ProjectAccess
+	ProjectAccessOWS := s.middlewares.ProjectAccessOWS
 
 	e.POST("/api/auth/login", s.handleLogin())
 	e.POST("/api/auth/logout", s.handleLogout)
