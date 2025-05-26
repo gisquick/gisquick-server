@@ -89,7 +89,7 @@ func NewAuthService(logger *zap.SugaredLogger, expiration time.Duration, account
 				logger.Errorw("getting account", "username", username, zap.Error(err))
 				return nil
 			}
-			item := c.Set(username, AccountToUser(account), ttlcache.DefaultTTL)
+			item := c.Set(username, domain.AccountToUser(account), ttlcache.DefaultTTL)
 			return item
 		},
 	)
@@ -163,7 +163,7 @@ func (s *AuthService) GetUser(c echo.Context) (domain.User, error) {
 					if err != nil {
 						return AnonymousUser, err
 					}
-					user = AccountToUser(account)
+					user = domain.AccountToUser(account)
 					s.basicAuthCache.Set(auth, user, ttlcache.DefaultTTL)
 				}
 			}
@@ -260,17 +260,4 @@ func (s *AuthService) LogoutUser(c echo.Context) {
 		MaxAge:   -1,
 		HttpOnly: true,
 	})
-}
-
-func AccountToUser(account domain.Account) domain.User {
-	return domain.User{
-		Username:        account.Username,
-		Email:           account.Email,
-		FirstName:       account.FirstName,
-		LastName:        account.LastName,
-		IsSuperuser:     account.Superuser,
-		IsGuest:         false,
-		IsAuthenticated: true,
-		Profile:         account.Profile,
-	}
 }

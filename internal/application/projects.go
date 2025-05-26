@@ -480,7 +480,7 @@ func TransformLayersTree(tree []domain.TreeNode, accept func(id string) bool, tr
 					"mutually_exclusive": g.MutuallyExclusive,
 				}
 				if g.WmsName != "" {
-					// ng["wms_name"] = g.WmsName
+					ng["id"] = g.WmsName
 					if s, ok := groupsSettings[g.WmsName]; ok {
 						ng["collapsed"] = s.Collapsed
 						ng["virtual_layer"] = s.VirtualLayer

@@ -38,14 +38,9 @@ type UserInfo struct {
 	Profile   map[string]any `json:"profile,omitempty"`
 }
 
-type UserData struct {
-	domain.User
-	Profile map[string]interface{} `json:"profile,omitempty"`
-}
-
 type AppPayload struct {
-	App  AppData  `json:"app"`
-	User UserData `json:"user"`
+	App  AppData     `json:"app"`
+	User domain.User `json:"user"`
 }
 
 func (s *Server) getUserProfile(user domain.User) (map[string]interface{}, error) {
@@ -78,10 +73,6 @@ func (s *Server) handleAppInit() func(echo.Context) error {
 			Language:       s.Config.Language,
 			LandingProject: s.Config.LandingProject,
 		}
-		userProfile, err := s.getUserProfile(user)
-		if err != nil {
-			s.log.Warnw("handleAppInit", "user", user.Username, zap.Error(err))
-		}
 		config, err = configReader.Extend("/etc/gisquick/app.json", config)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			s.log.Errorw("reading app configuration file", zap.Error(err))
@@ -92,9 +83,25 @@ func (s *Server) handleAppInit() func(echo.Context) error {
 		if s.accountsService.SupportEmails() {
 			app.PasswordResetUrl = "/api/accounts/password_reset"
 		}
+		if user.IsAuthenticated {
+			account, err := s.accountsService.Repository.GetByUsername(user.Username)
+			if err != nil {
+				s.log.Errorw("fetching account info", "user", user.Username, zap.Error(err))
+			} else {
+				user = domain.AccountToUser(account)
+			}
+			if len(user.Profile) == 0 {
+				userProfile, err := s.getUserProfile(user)
+				if err != nil {
+					s.log.Warnw("loading user profile (file)", "user", user.Username, zap.Error(err))
+				} else {
+					user.Profile = userProfile
+				}
+			}
+		}
 		data := AppPayload{
 			App:  app,
-			User: UserData{User: user, Profile: userProfile},
+			User: user,
 		}
 		return c.JSON(http.StatusOK, data)
 	}

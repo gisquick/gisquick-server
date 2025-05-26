@@ -29,7 +29,7 @@ func (s *Server) AddRoutes(e *echo.Echo) {
 	e.GET("/api/admin/users", s.handleGetAllUsers, SuperuserRequired)
 	e.GET("/api/admin/users/:user", s.handleGetUser, SuperuserRequired)
 	e.PUT("/api/admin/users/:user", s.handleUpdateUser(), SuperuserRequired)
-	e.PUT("/api/admin/users/profile/:user", s.handleUpdateUserProfile, SuperuserRequired)
+	e.PUT("/api/admin/users/profile/:user", s.handleAdminUpdateUserProfile, SuperuserRequired)
 	e.DELETE("/api/admin/users/:user", s.handleDeleteUser, SuperuserRequired)
 	e.POST("/api/admin/user", s.handleCreateUser(), SuperuserRequired)
 	e.POST("/api/admin/email_preview", s.handleGetEmailPreview(), SuperuserRequired)
@@ -49,6 +49,8 @@ func (s *Server) AddRoutes(e *echo.Echo) {
 	e.POST("/api/accounts/new_password", s.handleNewPassword())
 	e.POST("/api/accounts/change_password", s.handleChangePassword(), LoginRequired)
 	e.GET("/api/account", s.handleGetAccountInfo(), LoginRequired)
+	e.PUT("/api/account/profile", s.handleUpdateAccountProfile, LoginRequired)
+
 	e.GET("/api/auth/user", s.handleGetSessionUser)
 	e.GET("/api/auth/is_authenticated", s.handleGetSessionUser, LoginRequired)
 	e.GET("/api/auth/is_superuser", s.handleGetSessionUser, SuperuserRequired)

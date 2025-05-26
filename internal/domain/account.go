@@ -53,6 +53,8 @@ func checkPbkdf2(password, encoded string, keyLen int, h func() hash.Hash) (bool
 	return bytes.Equal(k, dk), nil
 }
 
+type Profile map[string]any
+
 // Account entity
 type Account struct {
 	Username  string
@@ -65,7 +67,7 @@ type Account struct {
 	Created   *time.Time
 	Confirmed *time.Time
 	LastLogin *time.Time
-	Profile   map[string]any
+	Profile   Profile
 }
 
 func (a *Account) IsActive() bool {
@@ -145,6 +147,7 @@ type AccountsRepository interface {
 	Create(account Account) error
 	Update(account Account) error
 	UpdateProfile(account Account) error
+	UpdateProfile2(username string, profile Profile) error
 	Delete(username string) error
 	GetByUsername(username string) (Account, error)
 	GetByEmail(email string) (Account, error)

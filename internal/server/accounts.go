@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -244,4 +245,19 @@ func (s *Server) handleGetAccountInfo() func(echo.Context) error {
 		}
 		return c.JSON(http.StatusOK, Payload{AccountLimits: limits})
 	}
+}
+
+func (s *Server) handleUpdateAccountProfile(c echo.Context) error {
+	user, err := s.auth.GetUser(c)
+	if err != nil {
+		return err
+	}
+	profile := make(map[string]any)
+	if json.NewDecoder(c.Request().Body).Decode(&profile) != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user profile format")
+	}
+	if err := s.accountsService.Repository.UpdateProfile2(user.Username, profile); err != nil {
+		return fmt.Errorf("updating account [%s]: %w", user.Username, err)
+	}
+	return c.NoContent(http.StatusOK)
 }

@@ -101,7 +101,7 @@ func (s *Server) handleUpdateUser() func(echo.Context) error {
 	}
 }
 
-func (s *Server) handleUpdateUserProfile(c echo.Context) error {
+func (s *Server) handleAdminUpdateUserProfile(c echo.Context) error {
 	username := c.Param("user")
 	profile := make(map[string]any)
 	err := json.NewDecoder(c.Request().Body).Decode(&profile)

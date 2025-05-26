@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/gisquick/gisquick-server/internal/server/auth"
+	"github.com/gisquick/gisquick-server/internal/domain"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -30,7 +30,7 @@ func (s *Server) handleLogin() func(echo.Context) error {
 		if err := s.auth.LoginUser(c, account); err != nil {
 			return err
 		}
-		user := auth.AccountToUser(account)
+		user := domain.AccountToUser(account)
 		if user.Profile == nil {
 			profile, err := s.getUserProfile(user)
 			if err != nil {
