@@ -22,6 +22,7 @@ type AppConfig struct {
 		Code string `json:"code"`
 		Name string `json:"name"`
 	} `json:"languages,omitempty"`
+	GoogleStreetAPI string `json:"google-street-api-key,omitempty"`
 }
 
 type AppData struct {
