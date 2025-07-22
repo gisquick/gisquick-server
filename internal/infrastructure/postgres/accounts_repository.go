@@ -21,8 +21,8 @@ func NewAccountsRepository(db *sqlx.DB) *AccountsRepository {
 func (r *AccountsRepository) Create(account domain.Account) error {
 	dbUser := toUser(account)
 	_, err := r.db.NamedExec(
-		`INSERT INTO users (username, email, password, first_name, last_name, is_superuser, is_active, created_at, confirmed_at, last_login_at)
-		VALUES (:username, :email, :password, :first_name, :last_name, :is_superuser, :is_active, :created_at, :confirmed_at, :last_login_at)`,
+		`INSERT INTO users (username, email, password, first_name, last_name, is_superuser, is_active, created_at, confirmed_at, last_login_at, profile)
+		VALUES (:username, :email, :password, :first_name, :last_name, :is_superuser, :is_active, :created_at, :confirmed_at, :last_login_at, :profile)`,
 		&dbUser,
 	)
 	if err != nil {

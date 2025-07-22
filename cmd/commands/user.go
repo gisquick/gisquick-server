@@ -24,16 +24,17 @@ var (
 )
 
 type Account struct {
-	Username  string     `json:"username"`
-	Email     string     `json:"email"`
-	Password  string     `json:"password"`
-	FirstName string     `json:"first_name"`
-	LastName  string     `json:"last_name"`
-	Active    bool       `json:"is_active"`
-	Superuser bool       `json:"is_superuser"`
-	Created   *time.Time `json:"created_at"`
-	Confirmed *time.Time `json:"confirmed_at"`
-	LastLogin *time.Time `json:"last_login_at"`
+	Username  string         `json:"username"`
+	Email     string         `json:"email"`
+	Password  string         `json:"password"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Active    bool           `json:"is_active"`
+	Superuser bool           `json:"is_superuser"`
+	Created   *time.Time     `json:"created_at"`
+	Confirmed *time.Time     `json:"confirmed_at"`
+	LastLogin *time.Time     `json:"last_login_at"`
+	Profile   map[string]any `json:"profile,omitempty"`
 }
 
 func runUserCommand(command func(dbConn *sqlx.DB, args conf.Args) error) error {
@@ -43,7 +44,7 @@ func runUserCommand(command func(dbConn *sqlx.DB, args conf.Args) error) error {
 			Password           string `conf:"default:postgres,mask"`
 			Host               string `conf:"default:postgres"`
 			Name               string `conf:"default:postgres,env:POSTGRES_DB"`
-			Port               int `conf:"default:5432"`
+			Port               int    `conf:"default:5432"`
 			SSLMode            string `conf:"default:prefer"`
 			StatementCacheMode string `conf:"default:prepare"`
 		}
@@ -156,6 +157,7 @@ func dumpUsers(dbConn *sqlx.DB, args conf.Args) error {
 			Created:   utcTime(u.Created),
 			Confirmed: utcTime(u.Confirmed),
 			LastLogin: utcTime(u.LastLogin),
+			Profile:   u.Profile,
 		}
 	}
 	encoder := json.NewEncoder(os.Stdout)
@@ -189,6 +191,7 @@ func loadUsers(dbConn *sqlx.DB, args conf.Args) error {
 			Created:   u.Created,
 			Confirmed: u.Confirmed,
 			LastLogin: u.LastLogin,
+			Profile:   u.Profile,
 		}
 		if err := accountsRepo.Create(a); err != nil {
 			fmt.Printf("failed to create account: %s (%s)\n", a.Username, err)
