@@ -48,6 +48,7 @@ type Topic struct {
 type ProjectRole struct {
 	Auth        string          `json:"type"`
 	Name        string          `json:"name"`
+	Note        string          `json:"note,omitempty"`
 	Users       []string        `json:"users"`
 	Permissions RolePermissions `json:"permissions"`
 }
