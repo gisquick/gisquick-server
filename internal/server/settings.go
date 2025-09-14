@@ -30,7 +30,7 @@ import (
 
 const MB int64 = 1024 * 1024
 
-var MaxJSONSize int64 = 1 * MB
+var MaxJSONSize int64 = 2 * MB
 var MaxScriptSize int64 = 5 * MB
 
 func (s *Server) handleGetProjectFiles() func(echo.Context) error {
@@ -395,7 +395,7 @@ func (s *Server) handleCreateProject() func(echo.Context) error {
 		var data json.RawMessage
 		d := json.NewDecoder(req.Body)
 		if err := d.Decode(&data); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Invalid request data")
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid request data:", err.Error())
 		}
 		username := c.Param("user")
 		name := c.Param("name")
@@ -499,7 +499,8 @@ func (s *Server) handleUpdateProjectMeta() func(echo.Context) error {
 		var data json.RawMessage
 		d := json.NewDecoder(req.Body)
 		if err := d.Decode(&data); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Invalid request data")
+			s.log.Errorw("decoding project metadata", "project", projectName, zap.Error(err))
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid request data:", err.Error())
 		}
 
 		err := s.projects.UpdateMeta(projectName, data)
@@ -524,7 +525,8 @@ func (s *Server) handleSaveProjectSettings(c echo.Context) error {
 	var data json.RawMessage
 	d := json.NewDecoder(req.Body)
 	if err := d.Decode(&data); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request data")
+		s.log.Errorw("decoding project settings", "project", projectName, zap.Error(err))
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request data:", err.Error())
 	}
 	return s.projects.UpdateSettings(projectName, data)
 }

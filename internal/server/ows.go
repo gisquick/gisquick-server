@@ -129,7 +129,7 @@ func (s *Server) handleMapOws() func(c echo.Context) error {
 	*/
 	director := func(req *http.Request) {
 		target, _ := url.Parse(s.Config.MapserverURL)
-		s.log.Infow("Map proxy", "query", req.URL.RawQuery)
+		// s.log.Debugw("Map proxy", "query", req.URL.RawQuery)
 		req.URL.Path = target.Path
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
