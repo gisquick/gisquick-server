@@ -242,7 +242,7 @@ func Serve() error {
 	projectsServ := application.NewProjectsService(log, projectsRepo, limiter)
 
 	sws := ws.NewSettingsWS(log)
-	s := server.NewServer(log, conf, authServ, accountsService, projectsServ, sws, limiter, notifications)
+	s := server.NewServer(log, conf, dbConn, authServ, accountsService, projectsServ, sws, limiter, notifications)
 
 	if cfg.Gisquick.Extensions != "" {
 		extensionsList := strings.Split(cfg.Gisquick.Extensions, ",")

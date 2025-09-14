@@ -12,6 +12,7 @@ import (
 	"github.com/gisquick/gisquick-server/internal/infrastructure/ws"
 	"github.com/gisquick/gisquick-server/internal/server/auth"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo-contrib/prometheus"
 
@@ -60,6 +61,7 @@ type Server struct {
 	sws               *ws.SettingsWS
 	limiter           application.AccountsLimiter
 	shutdownCallbacks []func()
+	db                *sqlx.DB
 }
 
 type JSONSerializer struct{}
@@ -89,7 +91,7 @@ func (d JSONSerializer) Deserialize(c echo.Context, i interface{}) error {
 	return err
 }
 
-func NewServer(log *zap.SugaredLogger, cfg Config,
+func NewServer(log *zap.SugaredLogger, cfg Config, db *sqlx.DB,
 	as *auth.AuthService, signUpService *application.AccountsService, projects application.ProjectService,
 	sws *ws.SettingsWS, limiter application.AccountsLimiter, notifications *project.RedisNotificationStore) *Server {
 	e := echo.New()
@@ -142,6 +144,7 @@ func NewServer(log *zap.SugaredLogger, cfg Config,
 		log:             log,
 		echo:            e,
 		auth:            as,
+		db:              db,
 		accountsService: signUpService,
 		projects:        projects,
 		middlewares:     middlewares,
