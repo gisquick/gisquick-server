@@ -49,6 +49,9 @@ type ProjectService interface {
 	UpdateScripts(projectName string, scripts domain.Scripts) error
 	RemoveScripts(projectName string, modules ...string) (domain.Scripts, error)
 
+	GetProcessingConfig(projectName string) (domain.ProcessingConfig, error)
+	UpdateProcessingConfig(projectName string, cfg domain.ProcessingConfig) error
+
 	GetProjectCustomizations(projectName string) (json.RawMessage, error)
 	Close()
 }
@@ -299,6 +302,14 @@ func (s *projectService) GetScripts(projectName string) (domain.Scripts, error) 
 
 func (s *projectService) UpdateScripts(projectName string, scripts domain.Scripts) error {
 	return s.repo.UpdateScripts(projectName, scripts)
+}
+
+func (s *projectService) GetProcessingConfig(projectName string) (domain.ProcessingConfig, error) {
+	return s.repo.GetProcessingConfig(projectName)
+}
+
+func (s *projectService) UpdateProcessingConfig(projectName string, cfg domain.ProcessingConfig) error {
+	return s.repo.UpdateProcessingConfig(projectName, cfg)
 }
 
 func (s *projectService) RemoveScripts(projectName string, modules ...string) (domain.Scripts, error) {
@@ -841,6 +852,10 @@ func (s *projectService) GetMapConfig(projectName string, user domain.User) (map
 		}
 	}
 	data["topics"] = topics
+	processingConfig, err := s.repo.GetProcessingConfig(projectName)
+	if err == nil && len(processingConfig.Services) > 0 {
+		data["processing"] = true
+	}
 	if settings.Geocoding != nil || settings.SearchByLocation {
 		search := SearchConfig{SearchByLocation: settings.SearchByLocation}
 		if settings.Geocoding != nil {

@@ -20,6 +20,7 @@ import (
 	"github.com/gisquick/gisquick-server/internal/infrastructure/project"
 	"github.com/gisquick/gisquick-server/internal/infrastructure/security"
 	"github.com/gisquick/gisquick-server/internal/infrastructure/ws"
+	"github.com/gisquick/gisquick-server/internal/processing"
 	"github.com/gisquick/gisquick-server/internal/server"
 	"github.com/gisquick/gisquick-server/internal/server/auth"
 	"github.com/go-redis/redis/v8"
@@ -118,6 +119,9 @@ func Serve() error {
 			ActivationSubject    string `conf:"default:Gisquick Registration"`
 			PasswordResetSubject string `conf:"default:Gisquick Password Reset"`
 		}
+		Processing struct {
+			Secret string `conf:"mask"`
+		}
 	}{}
 
 	// const prefix = "GISQUICK"
@@ -198,6 +202,7 @@ func Serve() error {
 	}
 
 	notifications := project.NewRedisNotificationStore(log, rdb)
+	jobStore := processing.NewRedisJobStore(rdb)
 
 	conf := server.Config{
 		Language:             cfg.Gisquick.Language,
@@ -210,6 +215,8 @@ func Serve() error {
 		SiteURL:              cfg.Web.SiteURL,
 		MaxProjectSize:       int64(cfg.Gisquick.ProjectSizeLimit),
 		ProjectCustomization: cfg.Gisquick.ProjectCustomization,
+		PublishRoot:          cfg.Gisquick.ProjectsRoot,
+		QGISPluginSecret:     cfg.Processing.Secret,
 	}
 
 	// Services
@@ -242,7 +249,7 @@ func Serve() error {
 	projectsServ := application.NewProjectsService(log, projectsRepo, limiter)
 
 	sws := ws.NewSettingsWS(log)
-	s := server.NewServer(log, conf, dbConn, authServ, accountsService, projectsServ, sws, limiter, notifications)
+	s := server.NewServer(log, conf, dbConn, authServ, accountsService, projectsServ, sws, limiter, notifications, jobStore)
 
 	if cfg.Gisquick.Extensions != "" {
 		extensionsList := strings.Split(cfg.Gisquick.Extensions, ",")

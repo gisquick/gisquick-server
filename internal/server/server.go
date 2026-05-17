@@ -10,6 +10,7 @@ import (
 	"github.com/gisquick/gisquick-server/internal/application"
 	"github.com/gisquick/gisquick-server/internal/infrastructure/project"
 	"github.com/gisquick/gisquick-server/internal/infrastructure/ws"
+	"github.com/gisquick/gisquick-server/internal/processing"
 	"github.com/gisquick/gisquick-server/internal/server/auth"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -33,8 +34,10 @@ type Config struct {
 	SessionExpiration    time.Duration
 	SignupAPI            bool
 	PluginsURL           string
-	MaxProjectSize       int64
+	MaxProjectSize        int64
 	ProjectCustomization bool
+	PublishRoot          string
+	QGISPluginSecret     string
 }
 
 var extensions = make(map[string]func(s *Server) error, 0)
@@ -62,6 +65,7 @@ type Server struct {
 	limiter           application.AccountsLimiter
 	shutdownCallbacks []func()
 	db                *sqlx.DB
+	jobStore          processing.JobStore
 }
 
 type JSONSerializer struct{}
@@ -93,7 +97,8 @@ func (d JSONSerializer) Deserialize(c echo.Context, i interface{}) error {
 
 func NewServer(log *zap.SugaredLogger, cfg Config, db *sqlx.DB,
 	as *auth.AuthService, signUpService *application.AccountsService, projects application.ProjectService,
-	sws *ws.SettingsWS, limiter application.AccountsLimiter, notifications *project.RedisNotificationStore) *Server {
+	sws *ws.SettingsWS, limiter application.AccountsLimiter, notifications *project.RedisNotificationStore,
+	jobStore processing.JobStore) *Server {
 	e := echo.New()
 	e.HideBanner = true
 
@@ -151,6 +156,7 @@ func NewServer(log *zap.SugaredLogger, cfg Config, db *sqlx.DB,
 		sws:             sws,
 		limiter:         limiter,
 		notifications:   notifications,
+		jobStore:        jobStore,
 	}
 
 	// e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))

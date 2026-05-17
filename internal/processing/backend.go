@@ -1,0 +1,63 @@
+package processing
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+
+	"github.com/gisquick/gisquick-server/internal/domain"
+	"go.uber.org/zap"
+)
+
+// ProcessDescription holds the structured fields of an OGC API - Processes
+// process description document. It is used internally when reading
+// jobControlOptions at execution time to decide async vs. sync mode.
+// The Raw field retains the original JSON for pass-through serialisation.
+type ProcessDescription struct {
+	Title             string          `json:"title,omitempty"`
+	Description       string          `json:"description,omitempty"`
+	Version           string          `json:"version,omitempty"`
+	JobControlOptions []string        `json:"jobControlOptions,omitempty"`
+	Inputs            json.RawMessage `json:"inputs,omitempty"`
+	Outputs           json.RawMessage `json:"outputs,omitempty"`
+	Raw               json.RawMessage `json:"-"` // full original JSON
+}
+
+// ProcessingBackend is the interface implemented by every processing backend
+// (OGC API - Processes, WPS, …). Handlers obtain a concrete implementation
+// through NewBackend and call these three methods during the job lifecycle.
+type ProcessingBackend interface {
+	// FetchProcessList retrieves the list of available process summaries from
+	// the remote service.
+	FetchProcessList(ctx context.Context, service domain.ProcessingService) ([]ProcessSummary, error)
+
+	// DescribeProcess fetches the full description of a single process.
+	DescribeProcess(ctx context.Context, service domain.ProcessingService, processID string) (*ProcessDescription, error)
+
+	// Execute submits an execution request and waits for it to complete (polling
+	// as needed). It returns the output results, the remote job ID (empty for
+	// synchronous responses), and any error. onProgress is called on each
+	// intermediate status poll with the current progress (nil if not reported)
+	// and message; it may be nil if the caller does not need progress updates.
+	Execute(ctx context.Context, job *JobRecord, service domain.ProcessingService, inputs json.RawMessage, onProgress ProgressFunc) (results []OutputResult, remoteJobID string, err error)
+}
+
+// ProgressFunc is called by a backend's polling loop on each intermediate
+// status update. progress is nil when the remote service does not report a
+// percentage. Implementations must be safe to call from a background goroutine.
+type ProgressFunc func(progress *int, message string)
+
+// NewBackend returns the appropriate ProcessingBackend implementation for the
+// given service type. Returns nil for unknown service types — callers must
+// guard against a nil return.
+func NewBackend(service domain.ProcessingService, httpClient *http.Client, log *zap.SugaredLogger) ProcessingBackend {
+	switch service.Type {
+	case domain.ProcessingServiceTypeOGCProcesses:
+		client := &OGCAPIClient{httpClient: httpClient, log: log}
+		return &OGCAPIBackend{client: client}
+	case domain.ProcessingServiceTypeWPS:
+		return &WPSBackend{client: httpClient, log: log}
+	default:
+		return nil
+	}
+}

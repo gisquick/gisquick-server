@@ -203,6 +203,53 @@ type Scripts map[string]ScriptModule
 
 type FilesReader func() (string, io.ReadCloser, error)
 
+// ProcessingServiceType represents the type of processing API.
+type ProcessingServiceType string
+
+const (
+	ProcessingServiceTypeWPS          ProcessingServiceType = "wps"
+	ProcessingServiceTypeOGCProcesses ProcessingServiceType = "ogcapi-processes"
+)
+
+// RemoteConfig describes the remote processing service endpoint.
+type RemoteConfig struct {
+	Type       string            `json:"type"`                  // "wps" or "ogcapi-processes"
+	ExecuteURL string            `json:"execute_url,omitempty"` // override; defaults to {service_url}/processes/{id}/execution
+	Method     string            `json:"method,omitempty"`      // default "POST"
+	StatusURL  string            `json:"status_url,omitempty"`
+	ResultURL  string            `json:"result_url,omitempty"`
+	Headers    map[string]string `json:"headers,omitempty"`
+}
+
+// InputFormat holds the accepted media types for a single process input,
+// in declaration order from the process description.
+type InputFormat struct {
+	AcceptedMediaTypes []string `json:"accepted_media_types,omitempty"`
+}
+
+// ProcessConfig holds the stored description for a specific process.
+type ProcessConfig struct {
+	Title        string                   `json:"title,omitempty"`
+	Description  json.RawMessage          `json:"description,omitempty"` // full OGC API process description, stored at registration time
+	InputFormats map[string]InputFormat   `json:"input_formats,omitempty"`
+}
+
+// ProcessingService represents a configured processing backend.
+type ProcessingService struct {
+	ID           string                   `json:"id"`
+	URL          string                   `json:"url"`
+	Type         ProcessingServiceType    `json:"type"`
+	Name         string                   `json:"name,omitempty"`
+	Headers      map[string]string        `json:"headers,omitempty"`
+	Processes    map[string]ProcessConfig `json:"processes,omitempty"`
+	ProcessOrder []string                 `json:"processOrder,omitempty"`
+}
+
+// ProcessingConfig holds the processing configuration for a project.
+type ProcessingConfig struct {
+	Services []ProcessingService `json:"services"`
+}
+
 type ProjectsRepository interface {
 	CheckProjectExists(name string) bool
 	Create(name string, qmeta json.RawMessage) (*ProjectInfo, error)
@@ -230,6 +277,8 @@ type ProjectsRepository interface {
 	UpdateFiles(projectName string, info FilesChanges, next FilesReader) ([]ProjectFile, error)
 	GetScripts(projectName string) (Scripts, error)
 	UpdateScripts(projectName string, scripts Scripts) error
+	GetProcessingConfig(projectName string) (ProcessingConfig, error)
+	UpdateProcessingConfig(projectName string, cfg ProcessingConfig) error
 	GetProjectCustomizations(projectName string) (json.RawMessage, error)
 	Close()
 }
